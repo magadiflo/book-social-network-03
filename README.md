@@ -181,3 +181,105 @@ Ahora, iremos a la pestaña `Credentials` para asignarle una contraseña al usua
 
 ![12.set-password-to-user.png](assets/12.set-password-to-user.png)
 
+---
+
+# Integrando Keycloak con Angular
+
+---
+
+## Instalando dependencia: keycloak-js
+
+Agregaremos la siguiente dependencia `keycloak-js` a nuestra aplicación de Angular. **Esta dependencia es una
+biblioteca JavaScript `OpenID Connect` del lado del cliente que se puede utilizar para proteger aplicaciones web.**
+
+**¡Importante!**
+> La versión de `keycloak-js` que debemos instalar debe ser la misma versión del servidor de `Keycloak` que estemos
+> usando. En nuestro caso, recordemos que hemos dockerizado nuestro servidor de `Keycloack` y la versión que estamos
+> usando es la `24.0.2`, por lo tanto, la dependencia `keycloak-js` que debemos instalar debe ser la misma.
+
+````bash
+M:\PROGRAMACION\DESARROLLO_JAVA_SPRING\02.youtube\18.bouali_ali\08.full_web_application\book-social-network-03\book-network-frontend (main -> origin)
+$ npm i keycloak-js@24.0.2
+````
+
+## Crea y configura el servicio para keycloak
+
+Crearemos el servicio `KeyclockService` a quien configuraremos para que se ejecute cuando arranque nuestra aplicación.
+Al iniciar nuestra aplicación debemos decirle a Angular que tenemos un proveedor de autenticación, en nuestro
+caso `Keycloack`, que queremos usar y que debe realizar todas las comprobaciones en dicho servidor.
+
+````typescript
+@Injectable({
+  providedIn: 'root'
+})
+export class KeycloakService {
+
+  async init() {
+    console.log('Inicializando Keycloak');
+  }
+
+}
+````
+
+**DONDE**
+
+- Notar que a la función `init()` le hemos antepuesto el `async`, con esto estamos indicando que es una función
+  asíncrona. Más adelante utilizaremos el `await` dentro de la función `init` para interactuar con el servidor de
+  keycloak.
+- Al tener definida la función con `async`, la función se convierte automáticamente en una función que devuelve una
+  `promesa`, independientemente de si utiliza `await` internamente o no. El uso de `await` dentro de la función
+  simplemente permite manejar otras promesas de manera más legible.
+- Si la función `async` retorna un valor, ese valor se convierte en la resolución de la promesa.
+- Si una función `async` no retorna explícitamente un valor, la promesa que se resuelve tendrá un valor de `undefined`,
+  lo que en términos prácticos equivale a `void`.
+- Si la función `async` lanza una excepción, esa excepción se convierte en el rechazo de la promesa.
+
+## ¿Qué es APP_INITIALIZER?
+
+`Angular` viene con un token `APP_INITIALIZER`, lo que permite a los desarrolladores ejecutar algún código antes de que
+la aplicación comience a ejecutarse. Proporciona una forma de cargar datos, realizar la autenticación o configurar el
+entorno de la aplicación antes de que la aplicación se represente en el explorador.
+
+`Angular` **ejecuta la función asociada con un token durante la carga de la aplicación. Si la función devuelve una
+promesa, Angular esperará a que la promesa se resuelva antes de inicializar la aplicación. Esto lo convierte en un
+lugar ideal para ejecutar la lógica de inicialización.**
+
+El token `APP_INITIALIZER` se define como proveedor en el módulo `@angular/core`. Toma una función como argumento y
+devuelve un `Promise` o un `Observable`. Cuando se inicia la aplicación, `Angular` invoca al proveedor `APP_INITIALIZER`
+y espera a que se resuelva la promesa o el observable antes de renderizar la aplicación.
+
+Para utilizar `APP_INITIALIZER` en la aplicación, debe definir una función que realice las tareas de inicialización y
+devuelva un `Promise` u `Observable`. Por ejemplo, en nuestro caso, deseamos comprobar usando kecyclock si un usuario
+está autenticado o no antes de que inicie la aplicación. Puede definir un proveedor de `APP_INITIALIZER` en el
+archivo `app.config.ts` (para Angular clásico sería en el archivo `app.module.ts`) de la siguiente manera:
+
+````typescript
+export function initialize(kcService: KeycloakService) {
+  return () => kcService.init();
+}
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideRouter(APP_ROUTES),
+    provideHttpClient(withInterceptors([httpTokenInterceptor])),
+    {
+      provide: APP_INITIALIZER,
+      useFactory: initialize,   //<-- Define el método initialize
+      deps: [KeycloakService],  //<-- Dependencias que serán inyectadas al método initialize()
+      multi: true,
+    }
+  ]
+};
+````
+
+**DONDE**
+
+- `multi: true`, esto indica que puede haber múltiples inicializadores registrados. Angular ejecutará todas las
+  funciones de inicialización y esperará a que todas las promesas u observables se resuelvan antes de continuar con la
+  inicialización de la aplicación.
+- `useFactory`, permite especificar una función de fábrica que crea la función de inicialización. Esto es útil para
+  inyectar servicios en la función de inicialización.
+
+Con la configuración anterior, cuando se inicie la aplicación, `Angular` invocará la función `initialize` a quien le
+estamos pasando o inyectando como `deps (dependencias)` la clase `KeycloakService`. El método `initialize` utilizará
+el método `init()` del servicio inyectado antes de renderizar la aplicación.
