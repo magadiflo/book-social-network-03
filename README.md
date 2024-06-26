@@ -103,4 +103,81 @@ archivo `compose.yml`. Luego de iniciar sesión seremos redireccionados al sigui
 
 ![02.keycloak-ui.png](assets/02.keycloak-ui.png)
 
-## 
+## Crea un nuevo realm y un client en Keycloak
+
+Para crear un nuevo `realm` seguimos los pasos de la imagen de abajo. El nuevo `realm` que crearemos tendrá el nombre
+de `book-social-network`.
+
+![03.new-realm.png](assets/03.new-realm.png)
+
+En la esquina superior izquierda seleccionamos el realm que acabamos de crear y luego en el menú del lateral izquierdo
+seleccionamos `clients`, para crear un nuevo cliente.
+
+El cliente que vamos a crear será para conectar nuestro frontend de `Angular` con el `realm`, así como también con
+nuestro backend de `Spring Boot`.
+
+![04.new-client.png](assets/04.new-client.png)
+
+La siguiente imagen muestra las configuraciones generales que le vamos a dar a este cliente:
+
+![05.general-settings-client.png](assets/05.general-settings-client.png)
+
+En la siguiente imagen dejamos todas las configuraciones por defecto:
+
+![06.capability-config.png](assets/06.capability-config.png)
+
+Finalmente, en la etapa de `Loging Settings` agregamos las urls según el campo solicitado:
+
+![07.loging-settings.png](assets/07.loging-settings.png)
+
+**DONDE**
+
+- `Root URL`, debe ser la URL raíz de nuestra aplicación de frontend, en nuestro caso es `http://localhost:4200`.
+
+
+- `Valid redirect URIs`, patrón de URI válido al que un navegador puede redirigir después de un inicio de sesión
+  exitoso. Se permiten comodines simples como `http://example.com/*`. También se puede especificar la ruta relativa,
+  como `/my/relative/path/*`. Las rutas relativas son relativas a la URL raíz del cliente o, si no se especifica
+  ninguna, se utiliza la URL raíz del servidor de autenticación.
+
+
+- `Valid post logout redirect URIs`, patrón de URI válido al que un navegador puede redirigir después de cerrar sesión
+  correctamente. Un valor de `+` o un campo vacío utilizará la lista de uris de redireccionamiento válidos. Un valor
+  de `-` no permitirá ningún URI de redireccionamiento posterior al cierre de sesión. Se permiten comodines simples
+  como `http://example.com/*`. También se puede especificar la ruta relativa, como `/my/relative/path/*`. Las rutas
+  relativas son relativas a la URL raíz del cliente o, si no se especifica ninguna, se utiliza la URL raíz del servidor
+  de autenticación.
+
+
+- `Web origins`, orígenes `CORS` permitidos. Para permitir todos los orígenes de URI de redireccionamiento válidos,
+  agregue `+`. Sin embargo, esto no incluye el comodín `*`. Para permitir todos los orígenes, agregue
+  explícitamente `*`.
+
+Finalmente, veremos que nuestro cliente ha sido creado exitosamente.
+
+![08.created-client.png](assets/08.created-client.png)
+
+## Crea un usuario
+
+Seleccionando el realm `book-social-network`, vamos a crear un usuario que lo usaremos más adelante.
+
+![09.create-user.png](assets/09.create-user.png)
+
+Crearemos el usuario tal como se ve en la imagen inferior. Este usuario solo nos servirá para mostrar el progreso
+que vayamos realizando a nuestra aplicación. Nótese además que en el campo `email verified` estamos marcando como `Yes`
+para decirle a `Keycloak` que el email del usuario lo coloque como un email verificado.
+
+**¡Importante!**
+> Nuestro objetivo final no es usar keycloak para crear usuarios, sino que queremos registrar usuarios a través de
+> Keycloak
+
+![10.new-user.png](assets/10.new-user.png)
+
+Una vez creado el usuario, seremos redireccionados a la siguiente página:
+
+![11.user-created.png](assets/11.user-created.png)
+
+Ahora, iremos a la pestaña `Credentials` para asignarle una contraseña al usuario:
+
+![12.set-password-to-user.png](assets/12.set-password-to-user.png)
+
