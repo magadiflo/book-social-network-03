@@ -8,6 +8,10 @@ En este curso de Spring Boot Angular, aprenderá cómo integrar `Keycloak` con `
 Recorriendo todas las configuraciones: creating a realm, client, users, roles, groups, localization,
 social authentication, keycloak events, etc.
 
+**Referencias**
+
+- [spring-microservices-in-action-2021](https://github.com/magadiflo/spring-microservices-in-action-2021/blob/main/09.securing-your-microservices.md)
+
 ---
 
 ## Flujo de autenticación de Keycloak
@@ -622,7 +626,8 @@ de `spring-boot-starter-oauth2-resource-server`:
 
 Recordar que en este proyecto veníamos trabajando con la dependencia de `Spring Security`, misma que debemos quitar
 de las dependencias del `pom.xml`, dado que la nueva dependencia agregada del `resource server` ya la trae internamente
-consigo.
+consigo. Lo mismo haremos con las 3 dependencias de `io.jsonwebtoken`, mismas que usábamos para crear, validar los jwt,
+pero como ahora trabajamos con Keycloak ya no los necesitamos.
 
 Otra modificación que haremos será en el `application-dev.yml`. Quitaremos las siguientes configuraciones, ya que ahora
 la emisión del jwt lo manejará el Authorization Server. Del mismo modo no necesitamos la url de activación, porque
@@ -682,3 +687,119 @@ seleccionamos la pestaña `General` y en la parte inferior habrá una opción de
 ````
 
 Si observamos la primera propiedad `issuer`, esta contiene la url que colocamos en el `application-dev.yml`.
+
+## Modifica la configuración de seguridad
+
+Modificamos la clase de configuración que teníamos inicialmente agregándole el método `.oauth2ResourceServer()`:
+
+````java
+
+/**
+ * La propiedad prePostEnabled habilita las anotaciones pre/post de Spring Security (default true).
+ * La propiedad securedEnabled determina si la anotación @Secured debería ser habilitada (default false).
+ * La propiedad jsr250Enabled nos permite usar la anotación @RolesAllowed (default false).
+ */
+@RequiredArgsConstructor
+@EnableMethodSecurity(securedEnabled = true)
+@EnableWebSecurity
+@Configuration
+public class SecurityConfig {
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .cors(Customizer.withDefaults())
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(
+                                "/api/v1/auth/**",
+                                "/v2/api-docs",
+                                "/v3/api-docs",
+                                "/v3/api-docs/**",
+                                "/swagger-resources",
+                                "/swagger-resources/**",
+                                "/configuration/ui",
+                                "/configuration/security",
+                                "/swagger-ui/**",
+                                "/webjars/**",
+                                "/swagger-ui.html").permitAll()
+                        .anyRequest().authenticated()
+                )
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(new KeycloakJwtAuthenticationConverter())));
+
+        return http.build();
+    }
+}
+````
+
+Observar que la clase de configuración anterior está haciendo uso de la clase personalizada
+`KeycloakJwtAuthenticationConverter` que mostramos a continuación:
+
+````java
+
+@Slf4j
+public class KeycloakJwtAuthenticationConverter implements Converter<Jwt, AbstractAuthenticationToken> {
+    @Override
+    public AbstractAuthenticationToken convert(@NonNull Jwt jwt) {
+        return new JwtAuthenticationToken(jwt,
+                Stream.concat(
+                        new JwtGrantedAuthoritiesConverter().convert(jwt).stream(),
+                        this.extractResourceRoles(jwt).stream()
+                ).collect(Collectors.toSet()));
+    }
+
+    private Collection<? extends GrantedAuthority> extractResourceRoles(Jwt jwt) {
+        Map<String, Map<String, List<String>>> resourceAccess = new HashMap<>(jwt.getClaim("resource_access"));
+        var eternal = (Map<String, List<String>>) resourceAccess.get("account");
+
+        return eternal.get("roles").stream()
+                .map(roleName -> "ROLE_" + roleName.replace("-", "_"))
+                .peek(roleName -> log.info("roleName: {}", roleName))
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toSet());
+    }
+}
+````
+
+El método `Stream.concat()` se utiliza para combinar dos secuencias `(Streams)` en una sola secuencia. Este método
+retorna un nuevo `Stream` que contiene todos los elementos del flujo `a (primer stream)` seguidos de todos los elementos
+del flujo `b (segundo stream)`.
+
+Notar que la clase anterior nos permite convertir los roles que se obtienen del servidor de Keycloak en formato de
+roles que es entendido por Spring Security `ROLE_<nombre_del_rol>`.
+
+En la siguiente imagen hemos decodificado un jwt obtenido luego de habernos autenticado desde Angular con Keycloak.
+Podemos observar que en la clase anterior estamos accediendo precisamente a lo remarcado en el cuadro verde.
+
+![18.jwt_decode.png](assets/18.jwt_decode.png)
+
+## Modificando la configuración de beans
+
+En la clase de configuración `BeansConfig` eliminaremos el `passwordEncoder` y el `authenticationManager` dejando
+únicamente los beans de auditoría y de cors.
+
+````java
+
+@Configuration
+public class BeansConfig {
+
+    @Bean
+    public AuditorAware<Long> auditorAware() { //El nombre de este método "auditorAware" será colocado en la anotación @EnableJpaAuditing
+        return new ApplicationAuditAware();
+    }
+
+    @Bean
+    public CorsFilter corsFilter() {
+        final CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowCredentials(true);
+        configuration.setAllowedOrigins(Collections.singletonList("http://localhost:4200"));
+        configuration.setAllowedHeaders(Arrays.asList(HttpHeaders.ORIGIN, HttpHeaders.CONTENT_TYPE, HttpHeaders.ACCEPT, HttpHeaders.AUTHORIZATION));
+        configuration.setAllowedMethods(Arrays.asList(HttpMethod.GET.name(), HttpMethod.POST.name(), HttpMethod.PUT.name(), HttpMethod.DELETE.name(), HttpMethod.PATCH.name()));
+
+        final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+
+        return new CorsFilter(source);
+    }
+}
+````
