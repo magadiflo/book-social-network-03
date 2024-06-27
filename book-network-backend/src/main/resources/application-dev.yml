@@ -30,18 +30,17 @@ spring:
           starttls:
             enable: true
 
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8181/realms/book-social-network
+
 logging:
   level:
     org.hibernate.SQL: DEBUG
 
 application:
-  security:
-    jwt:
-      secret-key: jNFY9S0YoLZ9xizq2V8FG5yMudcZpBKXyLQjSWPbiX8jNFY9S0Y
-      expiration: 3600000
-  mailing:
-    frontend:
-      activation-url: http://localhost:4200/auth/activate-account
   file:
     upload:
       photos-output-path: ./uploads

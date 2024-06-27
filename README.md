@@ -599,3 +599,86 @@ export class AuthLoginPageComponent implements OnInit {
 
 Con respecto al component html del `AuthLoginPageComponent`, eliminamos todas las etiquetas de dicho componente, ya que
 ahora el login lo mostrará el servidor `Keycloak`.
+
+---
+
+# Integrando Keycloak con Spring Boot
+
+---
+
+## Modificando dependencias y propiedades de configuración
+
+Actualmente, tenemos a `Keycloak` como nuestro servidor de Authorization. Ahora, necesitamos agregar la dependencia a
+nuestro backend para que se convierta en nuestro servidor de recursos, por lo tanto, necesitamos agregar la dependencia
+de `spring-boot-starter-oauth2-resource-server`:
+
+````xml
+
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+</dependency>
+````
+
+Recordar que en este proyecto veníamos trabajando con la dependencia de `Spring Security`, misma que debemos quitar
+de las dependencias del `pom.xml`, dado que la nueva dependencia agregada del `resource server` ya la trae internamente
+consigo.
+
+Otra modificación que haremos será en el `application-dev.yml`. Quitaremos las siguientes configuraciones, ya que ahora
+la emisión del jwt lo manejará el Authorization Server. Del mismo modo no necesitamos la url de activación, porque
+nuevamente, el registro del usuario lo maneja el servidor de autorización.
+
+````yml
+#security:
+#  jwt:
+#    secret-key: jNFY9S0YoLZ9xizq2V8FG5yMudcZpBKXyLQjSWPbiX8jNFY9S0Y
+#    expiration: 3600000
+#mailing:
+#  frontend:
+#    activation-url: http://localhost:4200/auth/activate-account
+````
+
+Lo que sí debemos agregar es la siguiente configuración:
+
+````yml
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8181/realms/book-social-network
+````
+
+La url que se colocó en `issuer-uri` se obtuvo del servidor de autorización. Si vamos a `Keycloak`, seleccionamos
+nuestro realm `book-social-network`, luego ingresamos en el apartado de `Realm settings`, en la parte derecha
+seleccionamos la pestaña `General` y en la parte inferior habrá una opción de `Enpoints` donde mostrará el enlace
+`OpenID Endpoint Configuration`, damos clic y observaremos que se nos abre la siguiente página con una respuesta json:
+
+`http://localhost:8181/realms/book-social-network/.well-known/openid-configuration`
+
+````bash
+{
+    "issuer": "http://localhost:8181/realms/book-social-network",
+    "authorization_endpoint": "http://localhost:8181/realms/book-social-network/protocol/openid-connect/auth",
+    "token_endpoint": "http://localhost:8181/realms/book-social-network/protocol/openid-connect/token",
+    "introspection_endpoint": "http://localhost:8181/realms/book-social-network/protocol/openid-connect/token/introspect",
+    "userinfo_endpoint": "http://localhost:8181/realms/book-social-network/protocol/openid-connect/userinfo",
+    "end_session_endpoint": "http://localhost:8181/realms/book-social-network/protocol/openid-connect/logout",
+    "frontchannel_logout_session_supported": true,
+    "frontchannel_logout_supported": true,
+    "jwks_uri": "http://localhost:8181/realms/book-social-network/protocol/openid-connect/certs",
+    "check_session_iframe": "http://localhost:8181/realms/book-social-network/protocol/openid-connect/login-status-iframe.html",
+    "grant_types_supported": [
+        "authorization_code",
+        "implicit",
+        "refresh_token",
+        "password",
+        "client_credentials",
+        "urn:openid:params:grant-type:ciba",
+        "urn:ietf:params:oauth:grant-type:device_code"
+    ],
+    ...
+}
+````
+
+Si observamos la primera propiedad `issuer`, esta contiene la url que colocamos en el `application-dev.yml`.
