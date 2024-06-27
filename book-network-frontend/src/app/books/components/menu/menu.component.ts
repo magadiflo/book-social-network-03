@@ -1,8 +1,8 @@
 import { Component, inject } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { SlicePipe } from '@angular/common';
 
-import { TokenService } from '../../../auth/services/token.service';
+import { KeycloakService } from '../../../keycloak/keycloak.service';
 
 @Component({
   selector: 'books-menu',
@@ -13,17 +13,15 @@ import { TokenService } from '../../../auth/services/token.service';
 })
 export class MenuComponent {
 
-  private _tokenService = inject(TokenService);
-  private _router = inject(Router);
+  private _keycloakService = inject(KeycloakService);
 
-  public logout() {
-    console.log('logout()...');
-    this._tokenService.logout();
-    this._router.navigate(['/auth', 'login']);
+  //* Agregamos el async, ya que los métodos que llamamos desde el keycloakService son métodos asíncronos
+  async logout(): Promise<void> {
+    this._keycloakService.logout();
   }
 
   public get fullName(): string {
-    return this._tokenService.fullName;
+    return this._keycloakService.profile?.firstName || '';
   }
 
 }

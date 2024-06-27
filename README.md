@@ -481,3 +481,121 @@ llamado `logout()`, este método podríamos haberlo dejado sin el parámetro del
 configurado en el servidor de Keycloak, allí definimos como uri de redirección la misma uri que pasamos a este método.
 Pero lo estamos colocando únicamente para ver que también podemos usar esta otra forma, de esa manera podemos tener
 a la mano más opciones de configuración.
+
+## Integrando KeycloakService con Guards
+
+Anteriormente, ya habíamos creado los Guards, así que vamos a modificarlos para inyectar el `KeycloakService`:
+
+````typescript
+import { inject } from '@angular/core';
+import { CanActivateFn, CanMatchFn, Router } from '@angular/router';
+
+import { KeycloakService } from '../keycloak/keycloak.service';
+
+export const canMatchAuthGuard: CanMatchFn = (route, segments) => {
+  console.log('Ejecutnado canMatchAuthGuard()');
+  return checkAuthStatus();
+}
+
+export const canActivateAuthGuard: CanActivateFn = (route, state) => {
+  console.log('Ejecutnado canActivateAuthGuard()');
+  return checkAuthStatus();
+};
+
+const checkAuthStatus = () => {
+  const keycloakService = inject(KeycloakService);
+  const router = inject(Router);
+
+  if (keycloakService.keycloak.isTokenExpired()) {
+    router.navigate(['/auth', 'login']);
+    return false;
+  }
+
+  return true;
+}
+````
+
+## Integrando KeycloakService con los interceptores
+
+Al igual que hicimos con el guard, haremos lo mismo con el interceptor. Ahora trabajaremos con el `KeycloakService`:
+
+````typescript
+import { HttpInterceptorFn } from '@angular/common/http';
+import { inject } from '@angular/core';
+
+import { KeycloakService } from '../keycloak/keycloak.service';
+
+export const httpTokenInterceptor: HttpInterceptorFn = (req, next) => {
+  const keycloakService = inject(KeycloakService);
+  const token: string | undefined = keycloakService.keycloak.token;
+
+  let reqClone = req;
+
+  if (token) {
+    reqClone = req.clone({
+      headers: req.headers.set('Authorization', `Bearer ${token}`)
+    });
+  }
+
+  return next(reqClone);
+};
+````
+
+## Modificando otros componentes para trabajar con KeycloakService
+
+Vamos a modificar el componente `MenuComponente`, ya que inicialmente estábamos trabajando con el `TokenService`, pero
+ahora trabajaremos con `KeycloakService`.
+
+````typescript
+@Component({
+  selector: 'books-menu',
+  standalone: true,
+  imports: [RouterLink, RouterLinkActive, SlicePipe],
+  templateUrl: './menu.component.html',
+  styleUrl: './menu.component.scss'
+})
+export class MenuComponent {
+
+  private _keycloakService = inject(KeycloakService);
+
+  //* Agregamos el async, ya que los métodos que llamamos desde el keycloakService son métodos asíncronos
+  async logout(): Promise<void> {
+    this._keycloakService.logout();
+  }
+
+  public get fullName(): string {
+    return this._keycloakService.profile?.firstName || '';
+  }
+
+}
+````
+
+Finalmente, modificamos el componente `AuthLoginPageComponent`, donde implementamos el método `ngOnInit()` para llamar
+a los métodos asíncronos del servicio `KeycloakService`.
+
+Observar que al método `ngOnInit()` le he colocado el `async`, eso es porque como dice el comentario, los métodos a los
+que llamamos son métodos asíncronos.
+
+````typescript
+@Component({
+  selector: 'auth-login-page',
+  standalone: true,
+  imports: [],
+  templateUrl: './auth-login-page.component.html',
+  styleUrl: './auth-login-page.component.scss'
+})
+export class AuthLoginPageComponent implements OnInit {
+
+  private _keycloakService = inject(KeycloakService);
+
+  //* Agregamos el async, ya que los métodos que llamamos desde el keycloakService son métodos asíncronos
+  async ngOnInit(): Promise<void> {
+    await this._keycloakService.init();
+    await this._keycloakService.login();
+  }
+
+}
+````
+
+Con respecto al component html del `AuthLoginPageComponent`, eliminamos todas las etiquetas de dicho componente, ya que
+ahora el login lo mostrará el servidor `Keycloak`.
