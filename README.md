@@ -301,7 +301,7 @@ export class KeycloakService {
 
   private _keycloak: Keycloak | undefined;
 
-  public get keycloak() {
+  public get keycloak(): Keycloak {
     if (!this._keycloak) {
     
       // Creando la instancia de Keycloak
@@ -386,4 +386,98 @@ comporta el login de keycloak:
 
 ![17.incorrect-credentials.png](assets/17.incorrect-credentials.png)
 
-Como observamos, el usuario ingresado no existe por lo tanto, nos muestra los mensajes de errores correspondientes.
+Como observamos, el usuario ingresado no existe, por lo tanto, nos muestra los mensajes de errores correspondientes.
+
+## Finaliza implementación de KeycloakService
+
+Creamos una clase de modelo donde definiremos atributos para el perfil de usuario con el que trabajaremos en la
+aplicación.
+
+````typescript
+//book-network-frontend\src\app\keycloak\models\user-profile.model.ts
+
+export interface UserProfile {
+  username?: string;
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  token?: string;
+}
+````
+
+Ahora, finalizamos la implementación de nuestra clase de servicio `KeycloakService` agregando métodos como el `login()`,
+`logout()`, `profile()` y utilizando la clase de modelo `UserProfile` para almacenar la información que nos proporciona
+`Keycloak` sobre el usuario autenticado.
+
+````typescript
+import { Injectable } from '@angular/core';
+import Keycloak from 'keycloak-js';
+import { UserProfile } from './models/user-profile.model';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class KeycloakService {
+
+  private _keycloak: Keycloak | undefined;
+  private _profile: UserProfile | undefined;
+
+  public get keycloak(): Keycloak {
+    if (!this._keycloak) {
+
+      this._keycloak = new Keycloak({
+        url: 'http://localhost:8181',
+        realm: 'book-social-network',
+        clientId: 'book-social-network'
+      });
+
+    }
+    return this._keycloak;
+  }
+
+  public get profile(): UserProfile | undefined {
+    return this._profile;
+  }
+
+  async init(): Promise<void> {
+    console.log('Autenticando al usuario...');
+    const authenticated = await this.keycloak.init({
+      onLoad: 'login-required',
+    });
+
+    if (authenticated) {
+      console.log('¡Usuario autenticado!');
+      this._profile = (await this.keycloak.loadUserProfile()) as UserProfile;
+      this._profile.token = this.keycloak.token || '';
+    }
+  }
+
+  public login(): Promise<void> {
+    return this.keycloak.login();
+  }
+
+  public logout(): Promise<void> {
+    return this.keycloak.logout({
+      redirectUri: 'http://localhost:4200'
+    });
+  }
+}
+````
+
+Observemos que utilizando el siguiente código podemos obtener el token de acceso:
+
+````typescript
+this.keycloak.token
+````
+
+Si quisiéramos acceder a la información parseada del token, podríamos usar este código:
+
+````typescript
+this.keycloak.tokenParsed
+````
+
+Finalmente, observemos el método `logout()`, internamente usa la instancia de keycloak y llama a su propio método
+llamado `logout()`, este método podríamos haberlo dejado sin el parámetro del `redirectUri`, ya que lo tenemos
+configurado en el servidor de Keycloak, allí definimos como uri de redirección la misma uri que pasamos a este método.
+Pero lo estamos colocando únicamente para ver que también podemos usar esta otra forma, de esa manera podemos tener
+a la mano más opciones de configuración.

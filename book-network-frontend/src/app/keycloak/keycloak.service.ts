@@ -2,14 +2,17 @@ import { Injectable } from '@angular/core';
 
 import Keycloak from 'keycloak-js';
 
+import { UserProfile } from './models/user-profile.model';
+
 @Injectable({
   providedIn: 'root'
 })
 export class KeycloakService {
 
   private _keycloak: Keycloak | undefined;
+  private _profile: UserProfile | undefined;
 
-  public get keycloak() {
+  public get keycloak(): Keycloak {
     if (!this._keycloak) {
 
       this._keycloak = new Keycloak({
@@ -22,7 +25,11 @@ export class KeycloakService {
     return this._keycloak;
   }
 
-  async init() {
+  public get profile(): UserProfile | undefined {
+    return this._profile;
+  }
+
+  async init(): Promise<void> {
     console.log('Autenticando al usuario...');
     const authenticated = await this.keycloak.init({
       onLoad: 'login-required',
@@ -30,7 +37,18 @@ export class KeycloakService {
 
     if (authenticated) {
       console.log('¡Usuario autenticado!');
+      this._profile = (await this.keycloak.loadUserProfile()) as UserProfile;
+      this._profile.token = this.keycloak.token || '';
     }
   }
 
+  public login(): Promise<void> {
+    return this.keycloak.login();
+  }
+
+  public logout(): Promise<void> {
+    return this.keycloak.logout({
+      redirectUri: 'http://localhost:4200'
+    });
+  }
 }
