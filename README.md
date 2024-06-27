@@ -283,3 +283,107 @@ export const appConfig: ApplicationConfig = {
 Con la configuración anterior, cuando se inicie la aplicación, `Angular` invocará la función `initialize` a quien le
 estamos pasando o inyectando como `deps (dependencias)` la clase `KeycloakService`. El método `initialize` utilizará
 el método `init()` del servicio inyectado antes de renderizar la aplicación.
+
+## Configuración inicial de keycloak con Angular
+
+En este apartado vamos a configurar la clase de servicio `KeycloakService` que creamos en el apartado anterior. Vamos
+a crear una instancia de `Keycloak` y definirle parámetros de conexión para que se conecte al servidor.
+
+````typescript
+import { Injectable } from '@angular/core';
+
+import Keycloak from 'keycloak-js';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class KeycloakService {
+
+  private _keycloak: Keycloak | undefined;
+
+  public get keycloak() {
+    if (!this._keycloak) {
+    
+      // Creando la instancia de Keycloak
+      this._keycloak = new Keycloak({
+        url: 'http://localhost:8181',
+        realm: 'book-social-network',
+        clientId: 'book-social-network'
+      });
+      
+    }
+    return this._keycloak;
+  }
+
+  async init() {
+    console.log('Autenticando al usuario...');
+    const authenticated = await this.keycloak.init({
+      onLoad: 'login-required',
+    });
+
+    if (authenticated) {
+      console.log('¡Usuario autenticado!');
+    }
+  }
+
+}
+````
+
+**DONDE**
+
+- En el método `get` estamos creando la instancia de `Keycloak`. La creación de esa instancia sigue el patrón Singletón,
+  de tal forma que si ya tenemos la instancia creada, simplemente la reutilizamos.
+- Cuando creamos la instancia `new Keycloak({...})`, le pasamos un objeto con tres parámetros.
+    - La `url`, es la URL del servidor de keycloak.
+    - El `realm`, es el nombre del realm al que nos conectaremos y es el que creamos en el servidor de Keycloak en
+      un apartado superior.
+    - El `clientId`, es el identificador del cliente. En nuestro caso, en el servidor de Keycloak, dentro del realm
+      anterior creamos un cliente con el siguiente identificador `book-social-network`.
+
+
+- En el método `init()` estamos haciendo uso de la instancia creada en el método `get`. Utilizamos el `await` para
+  esperar a que se resuelva el método `init()` de la instancia de keycloak. Este método recibe un objeto con un
+  atributo `onLoad` (aunque tiene más atributos), pero usaremos únicamente el `onLoad` como configuración mínima
+  requerida.
+- `onLoad`, especifica una acción a realizar al cargar. En nuestro caso definimos el tipo `login-required`, permite
+  verificar si ya se ha iniciado sesión o no. Hay otro valor que se puede colocar que es `check-sso`, podemos configurar
+  un inicio de sesión único para diferentes aplicaciones.
+- Finalmente, utilizamos una condición para verificar si el usuario se ha autenticado o no.
+
+## Probando configuración inicial de Keycloak con Angular
+
+## Con credenciales correctos
+
+Vamos a abrir un navegador e ingresar a nuestra aplicación de Angular.
+
+![13.start-keycloak-angular.png](assets/13.start-keycloak-angular.png)
+
+Al dar `enter` para ingresar a nuestra aplicación de `Angular`, seremos redireccionados al `login de keycloak`. Aquí
+debemos usar el usuario que creamos para este cliente. Recordemos lo que decía en el apartado `Crea un usuario`,
+que solo estábamos creando a este usuario para realizar las pruebas y aquí lo estamos usando.
+
+![14.login-keycloak.png](assets/14.login-keycloak.png)
+
+Luego de iniciar sesión de manera exitosa, keycloak nos redirecciona a nuestra aplicación de Angular.
+
+![15.redirect-to-angular.png](assets/15.redirect-to-angular.png)
+
+Nótese los mensajes que se muestran en consola, eso nos indica que la configuración que establecimos entre keycloak y
+nuestra aplicación de Angular está funcionando correctamente.
+
+## Finalizar sesión de usuario
+
+Si por alguna razón queremos finalizar la sesión del usuario `martin@gmail.com` debemos ingresar al panel de
+administración del servidor de keycloak con las credenciales username: `admin` y password: `admin` para terminar la
+sesión de manera manual, tal como se ve en la siguiente imagen:
+
+![16.sing-out-keycloak.png](assets/16.sing-out-keycloak.png)
+
+## Con credenciales incorrectos
+
+Vamos a realizar nuevamente el flujo, pero esta vez usaremos credenciales incorrectos para ver cómo se
+comporta el login de keycloak:
+
+![17.incorrect-credentials.png](assets/17.incorrect-credentials.png)
+
+Como observamos, el usuario ingresado no existe por lo tanto, nos muestra los mensajes de errores correspondientes.
