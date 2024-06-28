@@ -1045,3 +1045,27 @@ Luego, si damos en el botón `Submit` nos mostrará un formulario para actualiza
 eso se muestra gracias a que seleccionamos adicionalmente el `Update Password` de la opción `Required user actions`:
 
 ![26.update-profile.png](assets/26.update-profile.png)
+
+## Revisando flujo de usuario en aplicación
+
+Accedemos a nuestra aplicación de Angular `http://localhost:4200` e inmediatamente somos redireccionados al formulario
+de login del servidor de autorización de `Keycloak`:
+
+![27.angular-spring-boot.png](assets/27.angular-spring-boot.png)
+
+Luego de iniciar sesión con nuestro usuario que está registrado en el servidor de autorización, somos redireccionados
+a `http://localhost:4200/books`:
+
+![27.angular-spring-boot.png](assets/28.angular-spring-boot.png)
+
+Accedemos a `mis libros` para ver los libros que tiene registrados este usuario:
+
+![27.angular-spring-boot.png](assets/29.angular-spring-boot.png)
+
+Crearemos un nuevo libro, por el momento lo crearemos sin imagen:
+
+![27.angular-spring-boot.png](assets/30.angular-spring-boot.png)
+
+Observemos que al darle en crear nos muestra en el listado el libro creado exitosamente:
+
+![27.angular-spring-boot.png](assets/31.angular-spring-boot.png)
