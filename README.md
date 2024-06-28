@@ -1004,3 +1004,44 @@ necesitamos. Por ejemplo, se eliminó la dependencia de envío de `email`, se el
 incluso el paquete de `auth`, etc.
 
 Finalmente, hasta este punto ha quedado modificado la aplicación integrada totalmente con `Keycloak`.
+
+## Creando nuevo usuario para realizar pruebas
+
+Vamos a crear un nuevo usuario en el servidor de `Keycloak` para realizar la mayor cantidad de pruebas que podamos.
+
+Ingresamos al servidor de `Keycloak`, seleccionamos nuestro `realm` y empezamos a crear un nuevo usuario:
+
+![20.second-user.png](assets/20.second-user.png)
+
+Procedemos a crearle una contraseña, pero dejando el botón `Temporary` en `On`. Esto hará que el usuario cambie su
+contraseña la primera vez que accede a la aplicación.
+
+![21.set-password-to-second-user.png](assets/21.set-password-to-second-user.png)
+
+Habiendo guardado la contraseña, veremos que en la entrada `Required user actions` se agrega el tag `Update Password`,
+precisamente eso ocurre porque dejamos el botón `Temporary` en `On`.
+
+![22.required-actions-update-password.png](assets/22.required-actions-update-password.png)
+
+Ahora, en la misma entrada del `Required user actions` podemos seleccionar varias opciones. En nuestro caso,
+seleccionaremos la opción `Update profile`. Esta última opción mostrará un formulario la primera vez que el usuario
+acceda a la aplicación para que actualice sus datos.
+
+![23.update-profile-password.png](assets/23.update-profile-password.png)
+
+## Accediendo a la aplicación con el usuario recién creado
+
+Accedemos a nuestra aplicación de Angular `http://localhost:4200` e inmediatamente seremos redireccionados al formulario
+de login de `Keycloak`. En este formulario agregamos las credenciales del usuario creado en el apartado anterior.
+
+![24.login-with-new-user.png](assets/24.login-with-new-user.png)
+
+Una vez que le hemos dado en el botón `Sing In`, nos mostrará un formulario para actualizar el password. Recordemos que
+esta opción es gracias a que teníamos habilitado el botón `Temporary` en `On`.
+
+![25.update-password.png](assets/25.update-password.png)
+
+Luego, si damos en el botón `Submit` nos mostrará un formulario para actualizar el perfil del usuario. Recordemos que
+eso se muestra gracias a que seleccionamos adicionalmente el `Update Password` de la opción `Required user actions`:
+
+![26.update-profile.png](assets/26.update-profile.png)
