@@ -17,8 +17,8 @@ public class FeedbackMapper {
     }
 
 
-    public FeedbackResponse toFeedbackResponse(Feedback feedback, Long userId) {
-        boolean itIsOwnFeedback = Objects.equals(feedback.getBook().getOwner().getId(), userId);
+    public FeedbackResponse toFeedbackResponse(Feedback feedback, String userId) {
+        boolean itIsOwnFeedback = Objects.equals(feedback.getBook().getCreatedBy(), userId);
         return FeedbackResponse.builder()
                 .note(feedback.getNote())
                 .comment(feedback.getComment())

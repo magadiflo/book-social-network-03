@@ -3,7 +3,6 @@ package dev.magadiflo.book.network.app.book;
 import dev.magadiflo.book.network.app.common.BaseEntity;
 import dev.magadiflo.book.network.app.feedback.Feedback;
 import dev.magadiflo.book.network.app.history.BookTransactionHistory;
-import dev.magadiflo.book.network.app.user.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -28,10 +27,6 @@ public class Book extends BaseEntity {
     private String bookCover;
     private boolean archived;
     private boolean shareable;
-
-    @JoinColumn(name = "owner_id")
-    @ManyToOne
-    private User owner;
 
     @OneToMany(mappedBy = "book")
     private List<Feedback> feedbacks;

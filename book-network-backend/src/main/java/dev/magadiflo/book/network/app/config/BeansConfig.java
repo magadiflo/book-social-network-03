@@ -15,8 +15,10 @@ import java.util.Collections;
 @Configuration
 public class BeansConfig {
 
+    //El nombre de este método "auditorAware" será colocado en la anotación @EnableJpaAuditing
+    //String, porque el identificador del usuario que nos brinda keycloak es de ese tipo
     @Bean
-    public AuditorAware<Long> auditorAware() { //El nombre de este método "auditorAware" será colocado en la anotación @EnableJpaAuditing
+    public AuditorAware<String> auditorAware() {
         return new ApplicationAuditAware();
     }
 

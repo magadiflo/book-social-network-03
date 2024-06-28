@@ -12,5 +12,6 @@ export const APP_ROUTES: Routes = [
     loadChildren: () => import('./books/books.routes'),
     canMatch: [canMatchAuthGuard],
   },
-  { path: '**', redirectTo: '/auth', },
+  { path: '', redirectTo: '/books', pathMatch: 'full', },
+  { path: '**', redirectTo: '/books', },
 ];

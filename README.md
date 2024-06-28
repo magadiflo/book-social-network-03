@@ -803,3 +803,204 @@ public class BeansConfig {
     }
 }
 ````
+
+## Modificando entidades, clases de configuración, servicios, repositorios
+
+A continuación mostraré las clases o configuraciones más importantes de la integración de keycloak con nuestro proyecto
+de Spring Boot.
+
+````java
+//book-network-backend/src/main/java/dev/magadiflo/book/network/app/book/Book.java
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@Table(name = "books")
+public class Book extends BaseEntity {
+    private String title;
+    private String authorName;
+    private String isbn;
+    private String synopsis;
+    private String bookCover;
+    private boolean archived;
+    private boolean shareable;
+
+    @OneToMany(mappedBy = "book")
+    private List<Feedback> feedbacks;
+
+    @OneToMany(mappedBy = "book")
+    private List<BookTransactionHistory> histories;
+
+    @Transient
+    public double getRate() {
+        if (this.feedbacks == null || this.feedbacks.isEmpty()) {
+            return 0D;
+        }
+        double rate = this.feedbacks.stream()
+                .mapToDouble(Feedback::getNote)
+                .average()
+                .orElse(0D);
+        return Math.round(rate * 10D) / 10D;
+    }
+}
+````
+
+A continuación se muestra la entidad `BookTransactionHistory`. A esta entidad se le agregó el atributo `userId`, dado
+que necesitamos que esta entidad guarde en su tabla de base de datos el id del usuario que realiza la transacción.
+
+````java
+//book-network-backend/src/main/java/dev/magadiflo/book/network/app/history/BookTransactionHistory.java
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@Table(name = "book_transaction_history")
+public class BookTransactionHistory extends BaseEntity {
+    private boolean returned;
+    private boolean returnApproved;
+    private String userId;
+
+    @JoinColumn(name = "book_id")
+    @ManyToOne
+    private Book book;
+}
+````
+
+Aunque la siguiente entidad `Feedback` no tuvo modificaciones, lo muestro para recordar cómo tenemos estructurada esta
+entidad.
+
+````java
+//book-network-backend/src/main/java/dev/magadiflo/book/network/app/feedback/Feedback.java
+@Getter
+@Setter
+@SuperBuilder
+@NoArgsConstructor
+@AllArgsConstructor
+@Entity
+@Table(name = "feedbacks")
+public class Feedback extends BaseEntity {
+    private Double note;
+    private String comment;
+
+    @JoinColumn(name = "book_id")
+    @ManyToOne
+    private Book book;
+}
+````
+
+Las tres entidades anteriores serán mapeados a las siguientes tablas en la base de datos. Notar que como estamos
+trabajando con `Keycloak`, la administración de los usuarios es manejada totalmente por `Keycloak`, nosotros ya no nos
+preocupamos por eso. En ese sentido, eliminamos las entidades de usuarios, roles y tokens que teníamos inicialmente.
+
+![19.update-diagram-er.png](assets/19.update-diagram-er.png)
+
+**NOTA**
+
+> Si quisiéramos obtener el id del usuario porque lo necesitamos almacenar en alguna tabla, tal como lo hacemos en
+> la tabla `book_transaction_history`, podemos usar la inyección del `Authentication authentication` en los métodos
+> para acceder al `authentication.getName()` que es el que contiene el identificador del usuario dado por `Keycloak`.
+
+Los repositorios también deben ser modificados, básicamente en los lugares donde usamos el id del usuario para recuperar
+libros. Veamos un ejemplo:
+
+````java
+//book-network-backend/src/main/java/dev/magadiflo/book/network/app/book/BookRepository.java
+public interface BookRepository extends JpaRepository<Book, Long>, JpaSpecificationExecutor<Book> {
+
+    @Query("""
+            SELECT b
+            FROM Book AS b
+            WHERE b.archived = false AND
+                    b.shareable = true AND
+                    b.createdBy != :userId
+            """)
+    Page<Book> findAllDisplayableBooks(Pageable pageable, String userId);
+}
+````
+
+En el código anterior estamos usando el `createdBy` que representa el identificador del usuario que ha creado el libro,
+o en otras palabras quien es el dueño del libro. Recordemos que el valor para este atributo se agrega automáticamente
+gracias a la auditoría que configuramos en la aplicación.
+
+Ahora, en el siguiente repositorio veremos más casos como por ejemplo el del método `findAllBorrowedBooks()`. Observemos
+que en la consulta personalizada para este método usa la siguiente comparación `WHERE history.userId = :userId`, aquí
+estamos igualando el atributo `userId` de la entidad `BookTransactionHistory` con un id del usuario pasado por
+parámetro.
+
+````java
+
+public interface BookTransactionHistoryRepository extends JpaRepository<BookTransactionHistory, Long> {
+
+    @Query("""
+            SELECT history
+            FROM BookTransactionHistory AS history
+            WHERE history.userId = :userId
+            """)
+    Page<BookTransactionHistory> findAllBorrowedBooks(Pageable pageable, String userId);
+
+    @Query("""
+            SELECT history
+            FROM BookTransactionHistory AS history
+            WHERE history.book.createdBy = :userId
+            """)
+    Page<BookTransactionHistory> findAllReturnedBooks(Pageable pageable, String userId);
+
+    @Query("""
+            SELECT (COUNT(*) > 0) AS isBorrowed
+            FROM BookTransactionHistory AS history
+            WHERE history.userId = :userId AND
+                    history.book.id = :bookId AND
+                    history.returnApproved = false
+            """)
+    boolean isAlreadyBorrowedByUser(Long bookId, String userId);
+
+    @Query("""
+            SELECT history
+            FROM BookTransactionHistory AS history
+            WHERE history.userId = :userId AND
+                    history.book.id = :bookId AND
+                    history.returned = false AND
+                    history.returnApproved = false
+            """)
+    Optional<BookTransactionHistory> findByBookIdAndUserId(Long bookId, String userId);
+
+    @Query("""
+            SELECT history
+            FROM BookTransactionHistory AS history
+            WHERE history.book.createdBy = :userId AND
+                    history.book.id = :bookId AND
+                    history.returned = true AND
+                    history.returnApproved = false
+            """)
+    Optional<BookTransactionHistory> findByBookIdAndOwnerId(Long bookId, String userId);
+}
+````
+
+En resumen, para obtener el id del usuario de `Keycloak` usamos la inyección de dependencia del `Authentication` y el
+método `getName()`. Mientras que para obtener el id quien creó el libro lo obtenemos a través del `getCreatedBy()` del
+libro.
+
+````java
+public PageResponse<BookResponse> findAllBooks(int page, int size, Authentication authentication) {
+    Page<Book> bookPage = this.bookRepository.findAllDisplayableBooks(pageable, authentication.getName());
+    /* other codes */
+}
+
+public Long updateShareableStatus(Long bookId, Authentication authentication) {
+    /* another code */
+    if (!Objects.equals(book.getCreatedBy(), authentication.getName())) {
+        throw new OperationNotPermittedException("No puedes actualizar el estado del libro para compartir");
+    }
+    /* other codes */
+}
+````
+
+Existen más modificaciones que se han realizado, incluso se han eliminado clases, dependencias, dado que ya no lo
+necesitamos. Por ejemplo, se eliminó la dependencia de envío de `email`, se eliminaron las plantillas de correo,
+incluso el paquete de `auth`, etc.
+
+Finalmente, hasta este punto ha quedado modificado la aplicación integrada totalmente con `Keycloak`.

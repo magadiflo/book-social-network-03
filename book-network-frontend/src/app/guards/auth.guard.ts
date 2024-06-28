@@ -18,6 +18,7 @@ const checkAuthStatus = () => {
   const router = inject(Router);
 
   if (keycloakService.keycloak.isTokenExpired()) {
+    console.log({ isTokenExpired: keycloakService.keycloak.isTokenExpired() });
     router.navigate(['/auth', 'login']);
     return false;
   }

@@ -1,7 +1,6 @@
 package dev.magadiflo.book.network.app.handler;
 
 import dev.magadiflo.book.network.app.exception.OperationNotPermittedException;
-import jakarta.mail.MessagingException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -45,14 +44,6 @@ public class GlobalExceptionHandler {
                 .error(BusinessErrorCodes.BAD_CREDENTIALS.getDescription())
                 .build();
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(exceptionResponse);
-    }
-
-    @ExceptionHandler(MessagingException.class)
-    public ResponseEntity<ExceptionResponse> handleException(MessagingException exception) {
-        ExceptionResponse exceptionResponse = ExceptionResponse.builder()
-                .error(exception.getMessage())
-                .build();
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(exceptionResponse);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

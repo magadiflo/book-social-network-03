@@ -41,9 +41,9 @@ public class BaseEntity {
 
     @CreatedBy
     @Column(nullable = false, updatable = false)
-    private Long createdBy; // Del tipo Long, porque la clave primaria de la entidad User la definimos como Long
+    private String createdBy; // Del tipo String, porque el identificador de un usuario en keycloak está con ese tipo de dato
 
     @LastModifiedBy
     @Column(insertable = false)
-    private Long lastModifiedBy; // Del tipo Long, porque la clave primaria de la entidad User la definimos como Long
+    private String lastModifiedBy; // Del tipo String, porque el identificador de un usuario en keycloak está con ese tipo de dato
 }

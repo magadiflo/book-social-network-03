@@ -5,7 +5,6 @@ import dev.magadiflo.book.network.app.exception.OperationNotPermittedException;
 import dev.magadiflo.book.network.app.file.FileStorageService;
 import dev.magadiflo.book.network.app.history.BookTransactionHistory;
 import dev.magadiflo.book.network.app.history.BookTransactionHistoryRepository;
-import dev.magadiflo.book.network.app.user.User;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -29,9 +28,8 @@ public class BookService {
     private final FileStorageService fileStorageService;
 
     public PageResponse<BookResponse> findAllBooks(int page, int size, Authentication authentication) {
-        User user = (User) authentication.getPrincipal();
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
-        Page<Book> bookPage = this.bookRepository.findAllDisplayableBooks(pageable, user.getId());
+        Page<Book> bookPage = this.bookRepository.findAllDisplayableBooks(pageable, authentication.getName());
         List<BookResponse> bookResponses = bookPage.stream()
                 .map(this.bookMapper::toBookResponse)
                 .toList();
@@ -48,9 +46,8 @@ public class BookService {
     }
 
     public PageResponse<BookResponse> findAllBooksByOwner(int page, int size, Authentication authentication) {
-        User user = (User) authentication.getPrincipal();
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
-        Page<Book> bookPage = this.bookRepository.findAll(BookSpecification.withOwnerId(user.getId()), pageable);
+        Page<Book> bookPage = this.bookRepository.findAll(BookSpecification.withOwnerId(authentication.getName()), pageable);
         List<BookResponse> bookResponses = bookPage.stream()
                 .map(this.bookMapper::toBookResponse)
                 .toList();
@@ -67,9 +64,8 @@ public class BookService {
     }
 
     public PageResponse<BorrowedBookResponse> findAllBorrowedBooks(int page, int size, Authentication authentication) {
-        User user = (User) authentication.getPrincipal();
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
-        Page<BookTransactionHistory> allBorrowedBooks = this.transactionHistoryRepository.findAllBorrowedBooks(pageable, user.getId());
+        Page<BookTransactionHistory> allBorrowedBooks = this.transactionHistoryRepository.findAllBorrowedBooks(pageable, authentication.getName());
         List<BorrowedBookResponse> bookResponses = allBorrowedBooks.stream()
                 .map(this.bookMapper::toBorrowedBookResponse)
                 .toList();
@@ -85,9 +81,8 @@ public class BookService {
     }
 
     public PageResponse<BorrowedBookResponse> findAllReturnedBooks(int page, int size, Authentication authentication) {
-        User user = (User) authentication.getPrincipal();
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
-        Page<BookTransactionHistory> allBorrowedBooks = this.transactionHistoryRepository.findAllReturnedBooks(pageable, user.getId());
+        Page<BookTransactionHistory> allBorrowedBooks = this.transactionHistoryRepository.findAllReturnedBooks(pageable, authentication.getName());
         List<BorrowedBookResponse> bookResponses = allBorrowedBooks.stream()
                 .map(this.bookMapper::toBorrowedBookResponse)
                 .toList();
@@ -109,9 +104,7 @@ public class BookService {
     }
 
     public Long save(BookRequest request, Authentication authentication) {
-        User user = (User) authentication.getPrincipal();
         Book book = this.bookMapper.toBook(request);
-        book.setOwner(user);
         return this.bookRepository.save(book).getId();
     }
 
@@ -123,18 +116,17 @@ public class BookService {
             throw new OperationNotPermittedException("El libro solicitado no se puede tomar prestado porque está archivado o no se puede compartir");
         }
 
-        User user = (User) authentication.getPrincipal();
-        if (Objects.equals(book.getOwner().getId(), user.getId())) {
+        if (Objects.equals(book.getCreatedBy(), authentication.getName())) {
             throw new OperationNotPermittedException("No puedes pedir prestado tu propio libro");
         }
 
-        final boolean isAlreadyBorrowed = this.transactionHistoryRepository.isAlreadyBorrowedByUser(bookId, user.getId());
+        final boolean isAlreadyBorrowed = this.transactionHistoryRepository.isAlreadyBorrowedByUser(bookId, authentication.getName());
         if (isAlreadyBorrowed) {
             throw new OperationNotPermittedException("El libro solicitado ya está prestado");
         }
 
         BookTransactionHistory bookTransactionHistory = BookTransactionHistory.builder()
-                .user(user)
+                .userId(authentication.getName())
                 .book(book)
                 .returned(false)
                 .returnApproved(false)
@@ -144,11 +136,10 @@ public class BookService {
     }
 
     public Long updateShareableStatus(Long bookId, Authentication authentication) {
-        User user = (User) authentication.getPrincipal();
         Book book = this.bookRepository.findById(bookId)
                 .orElseThrow(() -> new EntityNotFoundException("No se encontró el libro con id " + bookId));
         // El status del libro solo puede ser actualizado por el dueño del propio libro
-        if (!Objects.equals(book.getOwner().getId(), user.getId())) {
+        if (!Objects.equals(book.getCreatedBy(), authentication.getName())) {
             throw new OperationNotPermittedException("No puedes actualizar el estado del libro para compartir");
         }
         book.setShareable(!book.isShareable());
@@ -157,11 +148,10 @@ public class BookService {
     }
 
     public Long updateArchivedStatus(Long bookId, Authentication authentication) {
-        User user = (User) authentication.getPrincipal();
         Book book = this.bookRepository.findById(bookId)
                 .orElseThrow(() -> new EntityNotFoundException("No se encontró el libro con id " + bookId));
         // El status del libro solo puede ser actualizado por el dueño del propio libro
-        if (!Objects.equals(book.getOwner().getId(), user.getId())) {
+        if (!Objects.equals(book.getCreatedBy(), authentication.getName())) {
             throw new OperationNotPermittedException("No puedes actualizar el estado del libro para archivar");
         }
         book.setArchived(!book.isArchived());
@@ -176,12 +166,11 @@ public class BookService {
             throw new OperationNotPermittedException("El libro solicitado no se puede tomar prestado porque está archivado o no se puede compartir");
         }
 
-        User user = (User) authentication.getPrincipal();
-        if (Objects.equals(book.getOwner().getId(), user.getId())) {
+        if (Objects.equals(book.getCreatedBy(), authentication.getName())) {
             throw new OperationNotPermittedException("No puedes pedir prestado o retornar tu propio libro");
         }
 
-        BookTransactionHistory bookTransactionHistory = this.transactionHistoryRepository.findByBookIdAndUserId(bookId, user.getId())
+        BookTransactionHistory bookTransactionHistory = this.transactionHistoryRepository.findByBookIdAndUserId(bookId, authentication.getName())
                 .orElseThrow(() -> new OperationNotPermittedException("No tomaste prestado este libro"));
         bookTransactionHistory.setReturned(true);
 
@@ -195,12 +184,11 @@ public class BookService {
             throw new OperationNotPermittedException("El libro solicitado no se puede tomar prestado porque está archivado o no se puede compartir");
         }
 
-        User user = (User) authentication.getPrincipal();
-        if (!Objects.equals(book.getOwner().getId(), user.getId())) {
+        if (!Objects.equals(book.getCreatedBy(), authentication.getName())) {
             throw new OperationNotPermittedException("No puedes aprobar la devolución de un libro que no te pertenece");
         }
 
-        BookTransactionHistory bookTransactionHistory = this.transactionHistoryRepository.findByBookIdAndOwnerId(bookId, user.getId())
+        BookTransactionHistory bookTransactionHistory = this.transactionHistoryRepository.findByBookIdAndOwnerId(bookId, authentication.getName())
                 .orElseThrow(() -> new OperationNotPermittedException("Los libros aún no han sido devueltos. No puedes aprobar su devolución"));
         bookTransactionHistory.setReturnApproved(true);
 
@@ -208,36 +196,32 @@ public class BookService {
     }
 
     public Long updateBook(BookRequest request, Authentication authentication) {
-        User user = (User) authentication.getPrincipal();
         Book bookDB = this.bookRepository.findById(request.id())
                 .orElseThrow(() -> new EntityNotFoundException("No se encontró el libro con id " + request.id()));
 
         Book book = this.bookMapper.toBook(request);
         book.setBookCover(bookDB.getBookCover());
         book.setArchived(bookDB.isArchived());
-        book.setOwner(user);
 
         return this.bookRepository.save(book).getId();
     }
 
     public void uploadBookCoverPicture(Long bookId, MultipartFile file, Authentication authentication) {
-        User user = (User) authentication.getPrincipal();
         Book book = this.bookRepository.findById(bookId)
                 .orElseThrow(() -> new EntityNotFoundException("No se encontró el libro con id " + bookId));
-        String bookCover = this.fileStorageService.saveFile(file, user.getId());
+        String bookCover = this.fileStorageService.saveFile(file, authentication.getName());
         book.setBookCover(bookCover);
 
         this.bookRepository.save(book);
     }
 
     public void updateUploadBookCoverPicture(Long bookId, MultipartFile file, Authentication authentication) {
-        User user = (User) authentication.getPrincipal();
         Book book = this.bookRepository.findById(bookId)
                 .orElseThrow(() -> new EntityNotFoundException("No se encontró el libro con id " + bookId));
 
         this.fileStorageService.deleteImageIfExists(book.getBookCover());
 
-        String bookCover = this.fileStorageService.saveFile(file, user.getId());
+        String bookCover = this.fileStorageService.saveFile(file, authentication.getName());
         book.setBookCover(bookCover);
 
         this.bookRepository.save(book);

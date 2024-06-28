@@ -4,7 +4,6 @@ import dev.magadiflo.book.network.app.book.Book;
 import dev.magadiflo.book.network.app.book.BookRepository;
 import dev.magadiflo.book.network.app.common.PageResponse;
 import dev.magadiflo.book.network.app.exception.OperationNotPermittedException;
-import dev.magadiflo.book.network.app.user.User;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -33,8 +32,7 @@ public class FeedbackService {
             throw new OperationNotPermittedException("No puedes dar comentarios sobre un libro archivado o que no se puede compartir");
         }
 
-        User user = (User) authentication.getPrincipal();
-        if (Objects.equals(book.getOwner().getId(), user.getId())) {
+        if (Objects.equals(book.getCreatedBy(), authentication.getName())) {
             throw new OperationNotPermittedException("No puedes dar comentarios sobre tu propio libro");
         }
 
@@ -44,10 +42,9 @@ public class FeedbackService {
 
     public PageResponse<FeedbackResponse> findAllFeedbackByBook(Long bookId, int page, int size, Authentication authentication) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
-        User user = (User) authentication.getPrincipal();
         Page<Feedback> feedbackPage = this.feebackRepository.findAllByBookId(bookId, pageable);
         List<FeedbackResponse> feedbackResponses = feedbackPage.stream()
-                .map(feedback -> this.feedbackMapper.toFeedbackResponse(feedback, user.getId()))
+                .map(feedback -> this.feedbackMapper.toFeedbackResponse(feedback, authentication.getName()))
                 .toList();
         return PageResponse.<FeedbackResponse>builder()
                 .content(feedbackResponses)
