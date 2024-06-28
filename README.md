@@ -1132,3 +1132,44 @@ Luego de que testeamos la configuración, veremos que llega un correo al usuario
 el servidor de `Keycloak`. Precisamente por eso fue que modificamos al usuario actual al inicio de este apartado.
 
 ![40.config-email.png](assets/40.config-email.png)
+
+## Registra usuario y recibe correo para activar cuenta
+
+En un apartado superior habíamos configurado la pestaña `Login`, pero no activamos la opción `Verify email`. En este
+apartado veremos que esa opción nos permitirá que un usuario reciba un email para activar su cuenta una vez que se
+haya registrado en el servidor de `Keycloak`.
+
+![41.register-user.png](assets/41.register-user.png)
+
+Ahora sí, vamos a ingresar a nuestra aplicación de Angular al `http://localhost:4200`, nos aparecerá el formulario de
+login, y una opción para registrarnos. Ingresamos a la opción de `register` y nos aparecerá el siguiente formulario:
+
+![42.register-user.png](assets/42.register-user.png)
+
+Notar que en el formulario anterior estamos usando un correo cuyo dominio es `@yopmail.com`. Vamos a utilizar esta
+alternativa de correo como una manera de recibir correos sin usar un correo real. Para eso accedemos
+a https://yopmail.com/es/ tal como se ve en la imagen inferior, luego colocamos el nombre de un correo cualquiera, no
+tiene que existir realmente.
+
+![43.register-user.png](assets/43.register-user.png)
+
+Luego de ingresar veremos nuestra bandeja temporal donde recibiremos correos que se nos envíe al `nophy@yopmail.com`:
+
+![44.register-user.png](assets/44.register-user.png)
+
+Regresemos al formulario de registro, una vez que le demos en `Register`, nos mostrará el siguiente mensaje:
+
+![45.register-user.png](assets/45.register-user.png)
+
+Verificamos nuestra bandeja temporal y clickeamos al link que nos llega para activar la cuenta.
+
+![46.register-user.png](assets/46.register-user.png)
+
+Luego de dar click en el enlace del correo temporal, seremos redireccionados a la aplicación de Angular.
+
+![47.register-user.png](assets/47.register-user.png)
+
+Finalmente, si revisamos nuestro servidor de `Keycloak` y nos vamos a la sección de usuarios, veremos que el que
+acabamos de registrar ya se encuentra en la lista de usuarios del servidor.
+
+![48.register-user.png](assets/48.register-user.png)
