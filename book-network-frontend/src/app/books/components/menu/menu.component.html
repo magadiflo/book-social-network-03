@@ -43,8 +43,11 @@
         <button class="btn btn-outline-success" type="submit" aria-label="Start search">
           <i class="fas fa-search"></i>
         </button>
-        <span class="text-secondary">Welcome</span>
         <span class="text-capitalize fw-bold text-white">{{ fullName | slice:0:5}}</span>
+        <button class="btn btn-link text-info" type="button" (click)="accountManagement()"
+          aria-label="account managament">
+          <i class="fa fa-cog" aria-hidden="true"></i>
+        </button>
         <button class="btn btn-link text-danger" type="button" (click)="logout()" aria-label="logout">
           <i class="fas fa-door-open"></i>
         </button>

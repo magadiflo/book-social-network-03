@@ -1069,3 +1069,30 @@ Crearemos un nuevo libro, por el momento lo crearemos sin imagen:
 Observemos que al darle en crear nos muestra en el listado el libro creado exitosamente:
 
 ![27.angular-spring-boot.png](assets/31.angular-spring-boot.png)
+
+---
+
+# Configuración Avanzada de Keycloak
+
+En este apartado exploraremos las distintas opciones, herramientas y formas de configurar Keycloak.
+
+---
+
+## Agrega configuraciones sobre el login
+
+Ingresamos al servidor de `Keycloak` y agregamos las siguientes modificaciones en el apartado de `Login`.
+
+![32.configurando-login-servidor.png](assets/32.configurando-login-servidor.png)
+
+Las configuraciones anteriores nos permitirán habilitar una serie de opciones en nuestro formulario de login, 
+como el recuérdame, recuperar contraseña, formulario de registro, etc.
+
+![33.login-with-options.png](assets/33.login-with-options.png)
+
+Si ingresamos al `forgot password` veremos el siguiente formulario:
+
+![34.forgot-password.png](assets/34.forgot-password.png)
+
+Si ingresamos al `Register` veremos el siguiente formulario:
+
+![35.register.png](assets/35.register.png)

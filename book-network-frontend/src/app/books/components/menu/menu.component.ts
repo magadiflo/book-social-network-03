@@ -15,13 +15,17 @@ export class MenuComponent {
 
   private _keycloakService = inject(KeycloakService);
 
+  public get fullName(): string {
+    return this._keycloakService.profile?.firstName || '';
+  }
+
   //* Agregamos el async, ya que los métodos que llamamos desde el keycloakService son métodos asíncronos
   async logout(): Promise<void> {
     this._keycloakService.logout();
   }
 
-  public get fullName(): string {
-    return this._keycloakService.profile?.firstName || '';
+  async accountManagement(): Promise<void> {
+    this._keycloakService.accountManagement();
   }
 
 }
