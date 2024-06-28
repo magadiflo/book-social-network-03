@@ -11,6 +11,7 @@ social authentication, keycloak events, etc.
 **Referencias**
 
 - [spring-microservices-in-action-2021](https://github.com/magadiflo/spring-microservices-in-action-2021/blob/main/09.securing-your-microservices.md)
+- [Keycloak: Server Administration Guide](https://www.keycloak.org/docs/latest/server_admin/)
 
 ---
 
@@ -1173,3 +1174,45 @@ Finalmente, si revisamos nuestro servidor de `Keycloak` y nos vamos a la secció
 acabamos de registrar ya se encuentra en la lista de usuarios del servidor.
 
 ![48.register-user.png](assets/48.register-user.png)
+
+## Configurando internacionalización (Localization)
+
+Vamos a la opción de `Localization` y habilitamos la internacionalización. Seleccionamos los idiomas que quereos que
+estén disponibles y el idioma por defecto.
+
+![49.internationalization.png](assets/49.internationalization.png)
+
+Habiendo guardado las configuraciones de internacionalización, accedemos a nuestra aplicación de Angular a través de
+la url `http://localhost:4200`, nos redireccionará al login y esta vez veremos una opción de select con los idiomas
+seleccionados:
+
+![50.internationalization.png](assets/50.internationalization.png)
+
+## Configura título de los formularios
+
+En los campos `Diplay name` y `HTML Display name` agregaremos algunas variables. Estas variables nos permitirán definir
+traducciones propias para el idioma que seleccionems.
+
+![51.internationalization.png](assets/51.internationalization.png)
+
+Si vamos al registro de usuario, veremos que se está mostrando por defecto el nombre que le dimos a la variable
+anterior. Esto se muestra así porque todavía no hemos definido algún valor para la variable.
+
+![52.internationalization.png](assets/52.internationalization.png)
+
+A continuación ingresamos al servidor de `Keycloak`, seleccionamos nuestro realm y luego en configuraciones del realm.
+En el apartado de `Localization`, seleccionamos `Realm overrides` para sobreescribir variables que hemos definido
+anteriormente según el idioma que seleccionemos.
+
+![53.internationalization.png](assets/53.internationalization.png)
+
+Luego, de darle un valor a la variable `realm.name` podremos ver el resultado en los formularios de login, register,
+etc.
+
+Así como hemos agregado un valor en espñol, lo mismo haremos con su equivalente en inglés.
+
+![54.internationalization.png](assets/54.internationalization.png)
+
+Finalmente, si guardamos la traducción veremos que esta se refleja en una lista.
+
+![55.internationalization.png](assets/55.internationalization.png)
