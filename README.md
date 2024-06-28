@@ -1084,7 +1084,7 @@ Ingresamos al servidor de `Keycloak` y agregamos las siguientes modificaciones e
 
 ![32.configurando-login-servidor.png](assets/32.configurando-login-servidor.png)
 
-Las configuraciones anteriores nos permitirán habilitar una serie de opciones en nuestro formulario de login, 
+Las configuraciones anteriores nos permitirán habilitar una serie de opciones en nuestro formulario de login,
 como el recuérdame, recuperar contraseña, formulario de registro, etc.
 
 ![33.login-with-options.png](assets/33.login-with-options.png)
@@ -1096,3 +1096,39 @@ Si ingresamos al `forgot password` veremos el siguiente formulario:
 Si ingresamos al `Register` veremos el siguiente formulario:
 
 ![35.register.png](assets/35.register.png)
+
+## Configura Keycloak para el envío de correo
+
+Vamos a ingresar al servidor de Keycloak, seleccionar el realm `book-social-network`, ir a la opción `Realm Settings`.
+En la ventana derecha nos aparecerá varias pestañas, vamos al `Email`. Luego nos dirigimos hacia abajo a la opción
+`Connection & Authentication`. Como siempre hemos ingresado al servidor de `Keycloak` con el usuario `admin` y ahora
+queremos habilitar el envío de correos, nos va a mostrar un `warning` diciendo que primero debemos agregar un correo al
+usuario actual `admin`, dado que cuando hagamos un test de las configuraciones de correo, el correo será enviado
+precisamente al que se va a registrar.
+
+Entonces, dando click en el mensaje del `warning` seremos redireccionados a esta pantalla donde agregaremos los datos
+del usuario `admin`, eso incluye un correo válido.
+
+![36.config-email.png](assets/36.config-email.png)
+
+Al dar en el botón de `save`, podemos refrescar la página y ahora veremos que tenemos el nombre ingresado en el apartado
+superior.
+
+![37.config-email.png](assets/37.config-email.png)
+
+Ahora sí, vamos nuevamente al apartado de `Email` para configurar la plantilla de correo que será enviada a los
+usuarios. En la parte inferior de la sección `Connection & Athentication` vamos a agregar los datos de conexión reales
+de un servidor de correo, en nuestro caso, estamos trabajando con nuestro propio `gmail`.
+
+![38.config-email.png](assets/38.config-email.png)
+
+Es importante agregar las configuraciones tal como se ve en la imagen para que funcione el envío de correos. Recordar,
+que la contraseña la generamos dentro de las configuraciones de `gmail`, esto evita que usemos nuestra contraseña
+real para esta configuración.
+
+![39.config-email.png](assets/39.config-email.png)
+
+Luego de que testeamos la configuración, veremos que llega un correo al usuario que ha iniciado sesión actualmente en
+el servidor de `Keycloak`. Precisamente por eso fue que modificamos al usuario actual al inicio de este apartado.
+
+![40.config-email.png](assets/40.config-email.png)
