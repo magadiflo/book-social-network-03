@@ -1216,3 +1216,66 @@ Así como hemos agregado un valor en espñol, lo mismo haremos con su equivalent
 Finalmente, si guardamos la traducción veremos que esta se refleja en una lista.
 
 ![55.internationalization.png](assets/55.internationalization.png)
+
+## Crea nuevos Realm roles
+
+Si vamos a la opción de `Realm roles` veremos que tenemos los siguientes roles por defecto:
+
+````
+default-roles-book-social-network
+offline_access
+uma_authorization
+````
+
+Recordemos que los `Realm roles` son globales para el realm en el que estamos, en este caso para
+el `book-social-network`. Ahora, si vamos a la opción de `Clients` y seleccionamos nuestro client `book-social-network`
+veremos que este cliente también tiene sus roles y así cualquier cliente que se cree tendrá sus propios roles. Por lo
+tanto, los roles del `Realm roles` están disponibles para todos los clientes, mientras que los roles de los clientes
+son roles que le pertenecen a los propios clientes, a nadie más.
+
+Entonces, vamos a crear tres nuevos roles en `Realm roles` para que esté disponible globalmente a todos los
+clientes, aunque actualmente solo tenemos un cliente.
+
+Los nuevos `Realm roles` que creamos son: `MANAGER`, `ADMIN` y `USER`:
+
+![56.realm-roles.png](assets/56.realm-roles.png)
+
+## Crea nuevos Grupos
+
+Los grupos no son nada más que contenedores de roles. A continuación vamos a crear tres grupos: administradores,
+gerentes y usuarios.
+
+![57.groups.png](assets/57.groups.png)
+
+A cada grupo que hemos creado vamos a mapearle su `realm role` correspondiente. En ese sentido:
+
+- Al grupo `ADMINS` lo mapeamos al rol `ADMIN`.
+- Al grupo `MANAGERS` lo mapeamos al rol `MANAGER`.
+- Al grupo `USERS` lo mapeamos al rol `USERS`.
+
+![58.groups.png](assets/58.groups.png)
+
+**¿Por qué creamos grupos?** Porque cuando asignamos un grupo a un usuario, automáticamente el usuario heredará el realm
+role definido en el grupo. Por ejemplo, cuando creamos manualmente un usuario, no necesitamos darle el rol,
+simplemente podemos asignarlo a un grupo y en automático tendrá el rol que tiene el grupo.
+
+## Asigna grupo a usuario
+
+Como ejemplo, vamos a asignar el grupo `USERS` al usuario `nophy@yopmail.com`. De esta manera el usuario `Nophy` tendrá
+el rol `USER` que está definido en el grupo `USERS`.
+
+![59.groups.png](assets/59.groups.png)
+
+Una vez agregado el grupo, lo veremos de esta manera.
+
+![60.groups.png](assets/60.groups.png)
+
+Ahora, si nos vamos a la opción de `Role mapping` del usuario `nophy@yopmail.com` y mostramos los roles heredados,
+veremos que el rol que tiene el grupo `USERS` (el rol `USER`), ahora lo tiene el usuario `nophy`.
+
+![61.groups.png](assets/61.groups.png)
+
+Ahora, si nos vamos al menú de grupos, veremos que el grupo `USERS` tiene como miembro el usuario al que acabamos de
+asignarle el grupo.
+
+![62.groups.png](assets/62.groups.png)
