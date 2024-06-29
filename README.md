@@ -1312,3 +1312,31 @@ rol `USER` que se agrega automáticamente va en el apartado de `realm_access`:
 
 ![67.user-registration.png](assets/67.user-registration.png)
 
+## Integrando Keycloak con Social Login
+
+Vamos a agregar la opción para poder registrarnos usando nuestra cuenta de `GitHub`.
+
+![68.social-login.png](assets/68.social-login.png)
+
+Todo lo que tenemos que hacer es ir a nuestra cuenta de `GitHub` y crear un `Client ID` y un `Client Secret` y agregarlo
+en el siguiente formulario. `Suponiendo` que ya tenemos las credenciales que `GitHub` nos ha proporcionado, pues las
+colocamos tal como vemos en la imagen.
+
+![69.social-login.png](assets/69.social-login.png)
+
+Luego de agregar al proveedor de GitHub, vamos al login de nuestra aplicación, veremos que ahora se muestra el botón
+para poder acceder con `GitHub`.
+
+![70.social-login.png](assets/70.social-login.png)
+
+Podemos agregar también el proveedor de identidad de google
+
+![71.social-login.png](assets/71.social-login.png)
+
+Veremos que ahora, el botón para iniciar sesión con google se ha agregado.
+
+![72.social-login.png](assets/72.social-login.png)
+
+**NOTA**
+> Para obtener los datos de configuración de estos proveedores de identidad debemos ir a cada uno de estos proveedores y
+> hacer el registro correspondiente.
