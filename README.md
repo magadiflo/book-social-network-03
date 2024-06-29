@@ -1279,3 +1279,36 @@ Ahora, si nos vamos al menú de grupos, veremos que el grupo `USERS` tiene como 
 asignarle el grupo.
 
 ![62.groups.png](assets/62.groups.png)
+
+## Asigna automáticamente un rol cuando un usuario se registra
+
+Cuando un usuario se registra, podemos asignarle automáticamente un rol. Vamos a configurar esa funcionalidad. Para eso
+nos vamos a la opción de `Realm settings`, luego a `User registration` y asignamos un rol.
+
+![63.user-registration.png](assets/63.user-registration.png)
+
+En este caso hemos asignado el `realm role` que creamos anteriormente llamado `USER`, esto significa que cada vez que un
+usuario se registra, automáticamente tendrá asignado el rol `USER`.
+
+![64.user-registration.png](assets/64.user-registration.png)
+
+## Verificando la asignación del rol automático al registrarse
+
+Vamos a nuestra aplicación de Angular `http://localhost:4200` y automáticamente nos redireccionará al formulario de
+login. Desde allí nos dirigimos al formulario de registro y registramos un nuevo usuario.
+
+![65.user-registration.png](assets/65.user-registration.png)
+
+Luego de registrarnos nos pedirá que activemos la cuenta, así que vamos a la bandeja de correo
+https://yopmail.com y damos click en el enlace que nos ha llegado.
+
+Ahora, si vamos al servidor de `Keycloak` y revisamos el usuario creado, veremos que se le ha asignado automáticamente
+el rol `USER`.
+
+![66.user-registration.png](assets/66.user-registration.png)
+
+Ahora, si decodificamos el `Access Token` que proporciona el servidor de autorización `Keycloak` veremos que el
+rol `USER` que se agrega automáticamente va en el apartado de `realm_access`:
+
+![67.user-registration.png](assets/67.user-registration.png)
+
