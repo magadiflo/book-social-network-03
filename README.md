@@ -1340,3 +1340,137 @@ Veremos que ahora, el botón para iniciar sesión con google se ha agregado.
 **NOTA**
 > Para obtener los datos de configuración de estos proveedores de identidad debemos ir a cada uno de estos proveedores y
 > hacer el registro correspondiente.
+
+---
+
+# Exportando Keycloak Realm
+
+---
+
+Una vez que hayamos terminado de configurar nuestra aplicación frontend, backend, servidor de Keycloak, clientes, roles,
+etc. y deseamos replicar esta misma configuración en otros entornos, por ejemplo, supongamos que estamos configurando
+en local y decidímos que las configuraciones realizadas las queremos llevar a otro entorno, pues en este apartado
+veremos como realizarlo.
+
+Lo primero que debemos hacer es exportar las configuraciones de nuestro Keycloak. Para eso necesitamos ingresar al
+contenedor de `Keycloack` y exportar un archivo que está dentro. Realicemos los siguientes pasos:
+
+````bash
+$ docker container ls -a
+CONTAINER ID   IMAGE                              COMMAND                  CREATED      STATUS                   PORTS                                            NAMES
+6a692a4d0e9a   quay.io/keycloak/keycloak:24.0.2   "/opt/keycloak/bin/k…"   2 days ago   Up 3 hours               8443/tcp, 0.0.0.0:8181->8080/tcp                 c-keycloak-bsn
+da11f9c3fd1c   maildev/maildev                    "bin/maildev"            2 days ago   Up 3 hours (unhealthy)   0.0.0.0:1025->1025/tcp, 0.0.0.0:1080->1080/tcp   c-mail-dev-bsn
+c32b6a08c00f   postgres:15.2-alpine               "docker-entrypoint.s…"   2 days ago   Up 3 hours               0.0.0.0:5435->5432/tcp                           c-postgres-bsn
+````
+
+Teniendo el nombre del contenedor de `Keycloak` accedemos dentro del contenedor:
+
+````bash
+$ docker container exec -it c-keycloak-bsn /bin/sh
+
+sh-5.1$ pwd
+/
+sh-5.1$ ls -l
+total 56
+dr-xr-xr-x   2 root root 4096 Aug  9  2021 afs
+lrwxrwxrwx   1 root root    7 Aug  9  2021 bin -> usr/bin
+dr-xr-xr-x   2 root root 4096 Aug  9  2021 boot
+drwxr-xr-x   5 root root  340 Jun 28 22:09 dev
+drwxr-xr-x   1 root root 4096 Jun 26 02:59 etc
+drwxr-xr-x   2 root root 4096 Aug  9  2021 home
+lrwxrwxrwx   1 root root    7 Aug  9  2021 lib -> usr/lib
+lrwxrwxrwx   1 root root    9 Aug  9  2021 lib64 -> usr/lib64
+drwxr-xr-x   2 root root 4096 Aug  9  2021 media
+drwxr-xr-x   2 root root 4096 Aug  9  2021 mnt
+drwxr-xr-x   1 root root 4096 Mar 24 22:34 opt
+dr-xr-xr-x 237 root root    0 Jun 28 22:09 proc
+dr-xr-x---   3 root root 4096 Feb 29 16:07 root
+drwxr-xr-x   4 root root 4096 Feb 29 16:07 run
+lrwxrwxrwx   1 root root    8 Aug  9  2021 sbin -> usr/sbin
+drwxr-xr-x   2 root root 4096 Aug  9  2021 srv
+dr-xr-xr-x  11 root root    0 Jun 28 22:09 sys
+drwxrwxrwt   1 root root 4096 Jun 28 16:12 tmp
+drwxr-xr-x   1 root root 4096 Mar 24 22:33 usr
+drwxr-xr-x   1 root root 4096 Mar 24 22:33 var
+````
+
+Accedemos al directorio `opt` que es donde se encuentra `Keycloak`:
+
+````bash
+sh-5.1$ cd opt
+sh-5.1$ ls
+keycloak
+sh-5.1$ cd keycloak/
+sh-5.1$ ls
+bin  conf  data  lib  LICENSE.txt  providers  README.md  themes  version.txt
+sh-5.1$ cd bin/
+sh-5.1$ ls -l
+total 40
+drwxrwxr-x 3 keycloak root 4096 Mar 24 22:27 client
+-rwxrwxr-x 1 keycloak root 1009 Mar 24 22:13 federation-sssd-setup.sh
+-rw-rw-r-- 1 keycloak root  832 Mar 24 22:13 kcadm.bat
+-rwxrwxr-x 1 keycloak root  822 Mar 24 22:13 kcadm.sh
+-rwxrwxr-x 1 keycloak root 6684 Mar 24 22:13 kc.bat
+-rw-rw-r-- 1 keycloak root  853 Mar 24 22:13 kcreg.bat
+-rwxrwxr-x 1 keycloak root  842 Mar 24 22:13 kcreg.sh
+-rwxrwxr-x 1 keycloak root 5968 Mar 24 22:13 kc.sh
+````
+
+Estando dentro del directorio `bin`, observamos que existe el archivo `kc.sh`, precisamente ese archivo es el que
+exportaremos. El archivo `kc.sh` lo va a exportar a un archivo llamado `book-social-network`. Es importante colocar
+el `realm` que vamos a exportar, ya que en el servidor de `Keycloak` puede haber
+muchos realms. En nuestro caso exportaremos el realm que hemos venido trabajando `book-social-network`.
+
+````bash
+sh-5.1$ ./kc.sh export --file book-social-network --realm book-social-network
+
+2024-06-29 01:35:19,602 WARN  [org.infinispan.CONFIG] (keycloak-cache-init) ISPN000569: Unable to persist Infinispan internal caches as no global state enabled
+2024-06-29 01:35:19,759 INFO  [org.infinispan.CONTAINER] (keycloak-cache-init) ISPN000556: Starting user marshaller 'org.infinispan.jboss.marshalling.core.JBossUserMarshaller'
+2024-06-29 01:35:20,046 INFO  [org.keycloak.quarkus.runtime.hostname.DefaultHostnameProvider] (main) Hostname settings: Base URL: <unset>, Hostname: <request>, Strict HTTPS: false, Path: <request>, Strict BackChannel: false, Admin URL: <unset>, Admin: <request>, Port: -1, Proxied: false
+2024-06-29 01:35:24,333 WARN  [io.quarkus.agroal.runtime.DataSources] (JPA Startup Thread) Datasource <default> enables XA but transaction recovery is not enabled. Please enable transaction recovery by setting quarkus.transaction-manager.enable-recovery=true, otherwise data may be lost if the application is terminated abruptly
+2024-06-29 01:35:27,142 INFO  [org.keycloak.broker.provider.AbstractIdentityProviderMapper] (main) Registering class org.keycloak.broker.provider.mappersync.ConfigSyncEventListener
+2024-06-29 01:35:27,204 INFO  [org.keycloak.connections.infinispan.DefaultInfinispanConnectionProviderFactory] (main) Node name: node_777297, Site name: null
+2024-06-29 01:35:29,206 INFO  [org.keycloak.services] (main) KC-SERVICES0034: Export of realm 'book-social-network' requested.
+2024-06-29 01:35:29,207 INFO  [org.keycloak.exportimport.singlefile.SingleFileExportProvider] (main) Exporting realm 'book-social-network' into file /opt/keycloak/bin/book-social-network
+2024-06-29 01:35:31,676 INFO  [org.keycloak.services] (main) KC-SERVICES0035: Export finished successfully
+2024-06-29 01:35:31,768 INFO  [io.quarkus] (main) Keycloak 24.0.2 on JVM (powered by Quarkus 3.8.3) started in 15.511s. Listening on:
+2024-06-29 01:35:31,771 INFO  [io.quarkus] (main) Profile import_export activated.
+2024-06-29 01:35:31,771 INFO  [io.quarkus] (main) Installed features: [agroal, cdi, hibernate-orm, jdbc-h2, keycloak, logging-gelf, narayana-jta, reactive-routes, resteasy-reactive, resteasy-reactive-jackson, smallrye-context-propagation, vertx]
+2024-06-29 01:35:31,922 INFO  [io.quarkus] (main) Keycloak stopped in 0.137s
+````
+
+Una vez finalizado, vemos que el archivo `book-social-network` ha sido creado correctamente.
+**La opción `-l` es para listar archivo y directorios con más detalle:**
+
+````bash
+sh-5.1$ ls -l
+total 116
+-rw-r--r-- 1 keycloak root 76422 Jun 29 01:35 book-social-network
+drwxrwxr-x 3 keycloak root  4096 Mar 24 22:27 client
+-rwxrwxr-x 1 keycloak root  1009 Mar 24 22:13 federation-sssd-setup.sh
+-rw-rw-r-- 1 keycloak root   832 Mar 24 22:13 kcadm.bat
+-rwxrwxr-x 1 keycloak root   822 Mar 24 22:13 kcadm.sh
+-rwxrwxr-x 1 keycloak root  6684 Mar 24 22:13 kc.bat
+-rw-rw-r-- 1 keycloak root   853 Mar 24 22:13 kcreg.bat
+-rwxrwxr-x 1 keycloak root   842 Mar 24 22:13 kcreg.sh
+-rwxrwxr-x 1 keycloak root  5968 Mar 24 22:13 kc.sh
+sh-5.1$ exit
+exit
+````
+
+Ahora necesitamos obtener el archivo exportado en nuestra pc local. En nuestro caso crearemos un directorio llamado
+`keycloak` en nuestro proyecto y dentro de el un directorio llamado `realm` donde copiaremos el archivo exportado
+anteriormente. Es importante posicionarnos en la raíz de nuestro proyecto.
+
+````bash
+M:\PROGRAMACION\DESARROLLO_JAVA_SPRING\02.youtube\18.bouali_ali\08.full_web_application\book-social-network-03 (main -> origin)
+
+$ docker cp c-keycloak-bsn:/opt/keycloak/bin/book-social-network ./keycloak/realm
+Successfully copied 78.3kB to M:\PROGRAMACION\DESARROLLO_JAVA_SPRING\02.youtube\18.bouali_ali\08.full_web_application\book-social-network-03\keycloak\realm
+````
+
+En el comando anterior estamos copiando el archivo `book-social-network` que está dentro del contenedor hacia un
+directorio de nuestra pc local.
+
+**Finalmente, na vez que tengamos el archivo exportado, lo único que tenemos que hacer es ir al entorno que queremos
+replicar e importar nuestro archivo de configuración.**
