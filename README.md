@@ -11,6 +11,7 @@ social authentication, keycloak events, etc.
 **Referencias**
 
 - [spring-microservices-in-action-2021](https://github.com/magadiflo/spring-microservices-in-action-2021/blob/main/09.securing-your-microservices.md)
+- [OAuth 2 With Spring, Angular, Keycloak](https://www.angulararchitects.io/blog/oauth2-with-spring-angular-keycloak-spring-for-resource-server/)
 - [Keycloak: Server Administration Guide](https://www.keycloak.org/docs/latest/server_admin/)
 
 ---
@@ -1116,6 +1117,13 @@ Al dar en el botón de `save`, podemos refrescar la página y ahora veremos que 
 superior.
 
 ![37.config-email.png](assets/37.config-email.png)
+
+Es importante tener en cuenta que, como hemos agregado un email al usuario `admin` (usuario con el que anteriormente
+ingresábamos al servidor de `Keycloak`), ahora debemos ingresar ya no con `admin` sino más bien con
+`magadiflo@gmail.com` porque en las configuraciones que realizamos sobre el `Realm settings/Login` habilitamos la
+opción de `Email as username`.
+
+![37.5.new-credentials-keycloak-server.png](assets/37.5.new-credentials-keycloak-server.png)
 
 Ahora sí, vamos nuevamente al apartado de `Email` para configurar la plantilla de correo que será enviada a los
 usuarios. En la parte inferior de la sección `Connection & Athentication` vamos a agregar los datos de conexión reales
